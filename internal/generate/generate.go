@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"strings"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/schema"
 
-	"gorm.io/gen/internal/model"
+	"github.com/wubin1989/gen/internal/model"
 )
 
 /*

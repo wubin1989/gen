@@ -1,14 +1,14 @@
-package gen
+package gormgen
 
 import (
 	"reflect"
 	"regexp"
 	"strings"
 
-	"gorm.io/gen/field"
-	"gorm.io/gen/internal/generate"
-	"gorm.io/gen/internal/model"
-	"gorm.io/gorm/schema"
+	"github.com/wubin1989/gen/field"
+	"github.com/wubin1989/gen/internal/generate"
+	"github.com/wubin1989/gen/internal/model"
+	"github.com/wubin1989/gorm/schema"
 )
 
 // ModelOpt field option
@@ -141,6 +141,10 @@ var (
 	// FieldGORMTag specify GORM tag
 	FieldGORMTag = func(columnName string, gormTag func(tag field.GormTag) field.GormTag) model.ModifyFieldOpt {
 		return func(m *model.Field) *model.Field {
+			if columnName == "" {
+				m.GORMTag = gormTag(m.GORMTag)
+				return m
+			}
 			if m.ColumnName == columnName {
 				m.GORMTag = gormTag(m.GORMTag)
 			}

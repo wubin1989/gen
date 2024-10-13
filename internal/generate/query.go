@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"strings"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/schema"
 
-	"gorm.io/gen/field"
-	"gorm.io/gen/internal/model"
-	"gorm.io/gen/internal/parser"
+	"github.com/wubin1989/gen/field"
+	"github.com/wubin1989/gen/internal/model"
+	"github.com/wubin1989/gen/internal/parser"
 )
 
 type FieldParser interface {
@@ -37,8 +37,9 @@ type QueryStructMeta struct {
 	Source          model.SourceCode
 	ImportPkgPaths  []string
 	ModelMethods    []*parser.Method // user custom method bind to db base struct
-
-	interfaceMode bool
+	interfaceMode   bool
+	PriKeyType      string
+	PbPrimaryProp   string
 }
 
 // parseStruct get all elements of struct with gorm's Parse, ignore unexported elements
@@ -160,7 +161,7 @@ func (b *QueryStructMeta) StructComment() string {
 // ReviseDIYMethod check diy method duplication name
 func (b *QueryStructMeta) ReviseDIYMethod() error {
 	var duplicateMethodName []string
-	var tableName *parser.Method
+	//var tableName *parser.Method
 	methods := make([]*parser.Method, 0, len(b.ModelMethods))
 	methodMap := make(map[string]bool, len(b.ModelMethods))
 	for _, method := range b.ModelMethods {
@@ -168,21 +169,10 @@ func (b *QueryStructMeta) ReviseDIYMethod() error {
 			duplicateMethodName = append(duplicateMethodName, method.MethodName)
 			continue
 		}
-		if method.MethodName == "TableName" {
-			tableName = method
-		}
 		method.Receiver.Package = ""
 		method.Receiver.Type = b.ModelStructName
 		methods = append(methods, method)
 		methodMap[method.MethodName] = true
-	}
-	if tableName == nil {
-		methods = append(methods, parser.DefaultMethodTableName(b.ModelStructName))
-	} else {
-		//e.g. return "@@table" => return TableNameUser
-		tableName.Body = strings.ReplaceAll(tableName.Body, "\"@@table\"", "TableName"+b.ModelStructName)
-		//e.g. return "t_@@table" => return "t_user"
-		tableName.Body = strings.ReplaceAll(tableName.Body, "@@table", b.TableName)
 	}
 	b.ModelMethods = methods
 

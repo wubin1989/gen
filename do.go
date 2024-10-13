@@ -1,4 +1,4 @@
-package gen
+package gormgen
 
 import (
 	"context"
@@ -7,13 +7,13 @@ import (
 	"reflect"
 	"strings"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/callbacks"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/callbacks"
+	"github.com/wubin1989/gorm/clause"
+	"github.com/wubin1989/gorm/schema"
 
-	"gorm.io/gen/field"
-	"gorm.io/gen/helper"
+	"github.com/wubin1989/gen/field"
+	"github.com/wubin1989/gen/helper"
 )
 
 // ResultInfo query/execute info
@@ -813,6 +813,11 @@ func (d *DO) Rows() (*sql.Rows, error) {
 // Scan ...
 func (d *DO) Scan(dest interface{}) error {
 	return d.db.Model(d.newResultPointer()).Scan(dest).Error
+}
+
+// Fetch ...
+func (d *DO) Fetch(dest interface{}) error {
+	return d.db.Model(d.newResultPointer()).Find(dest).Error
 }
 
 // Pluck ...

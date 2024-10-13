@@ -1,16 +1,16 @@
-package gen
+package gormgen
 
 import (
 	"reflect"
 	"strings"
 	"testing"
 
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/hints"
+	"github.com/wubin1989/datatypes"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/clause"
+	"github.com/wubin1989/hints"
 
-	"gorm.io/gen/field"
+	"github.com/wubin1989/gen/field"
 )
 
 var (

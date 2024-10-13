@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"gorm.io/gen/field"
-	"gorm.io/gorm"
+	"github.com/wubin1989/gen/field"
+	"github.com/wubin1989/gorm"
 )
 
 // Column table column's info
@@ -16,7 +16,7 @@ type Column struct {
 	Indexes     []*Index                                                      `gorm:"-"`
 	UseScanType bool                                                          `gorm:"-"`
 	dataTypeMap map[string]func(columnType gorm.ColumnType) (dataType string) `gorm:"-"`
-	jsonTagNS   func(columnName string) string                                `gorm:"-"`
+	jsonTagNS   func(columnName string, columnType string) string             `gorm:"-"`
 }
 
 // SetDataTypeMap set data type map
@@ -36,10 +36,10 @@ func (c *Column) GetDataType() (fieldtype string) {
 }
 
 // WithNS with name strategy
-func (c *Column) WithNS(jsonTagNS func(columnName string) string) {
+func (c *Column) WithNS(jsonTagNS func(columnName string, columnType string) string) {
 	c.jsonTagNS = jsonTagNS
 	if c.jsonTagNS == nil {
-		c.jsonTagNS = func(n string) string { return n }
+		c.jsonTagNS = func(n string, _ string) string { return n }
 	}
 }
 
@@ -65,14 +65,17 @@ func (c *Column) ToField(nullable, coverable, signable bool) *Field {
 		comment = c
 	}
 
+	isPriKey, ok := c.PrimaryKey()
+
 	return &Field{
 		Name:             c.Name(),
 		Type:             fieldType,
 		ColumnName:       c.Name(),
 		MultilineComment: c.multilineComment(),
 		GORMTag:          c.buildGormTag(),
-		Tag:              map[string]string{field.TagKeyJson: c.jsonTagNS(c.Name())},
+		Tag:              map[string]string{field.TagKeyJson: c.jsonTagNS(c.Name(), fieldType)},
 		ColumnComment:    comment,
+		PriKey:           ok && isPriKey,
 	}
 }
 
@@ -128,15 +131,17 @@ func (c *Column) needDefaultTag(defaultTagValue string) bool {
 	if defaultTagValue == "" {
 		return false
 	}
-	switch c.ScanType().Kind() {
-	case reflect.Bool:
-		return defaultTagValue != "false"
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
-		return defaultTagValue != "0"
-	case reflect.String:
-		return defaultTagValue != ""
-	case reflect.Struct:
-		return strings.Trim(defaultTagValue, "'0:- ") != ""
+	if c.ScanType() != nil {
+		switch c.ScanType().Kind() {
+		case reflect.Bool:
+			return defaultTagValue != "false"
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
+			return defaultTagValue != "0"
+		case reflect.String:
+			return defaultTagValue != ""
+		case reflect.Struct:
+			return strings.Trim(defaultTagValue, "'0:- ") != ""
+		}
 	}
 	return c.Name() != "created_at" && c.Name() != "updated_at"
 }

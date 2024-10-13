@@ -2,11 +2,12 @@ package field
 
 import (
 	"context"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
 	"reflect"
 
-	"gorm.io/gorm"
+	"github.com/wubin1989/gorm/clause"
+	"github.com/wubin1989/gorm/schema"
+
+	"github.com/wubin1989/gorm"
 )
 
 type ValuerType struct {

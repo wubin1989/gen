@@ -1,11 +1,11 @@
-package gen
+package gormgen
 
 import (
 	"fmt"
 
-	"gorm.io/datatypes"
-	"gorm.io/gen/field"
-	"gorm.io/gorm/clause"
+	"github.com/wubin1989/datatypes"
+	"github.com/wubin1989/gen/field"
+	"github.com/wubin1989/gorm/clause"
 )
 
 // Cond convert expression array to condition array

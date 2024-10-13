@@ -1,13 +1,13 @@
-package gen
+package gormgen
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 
-	"gorm.io/gorm/clause"
-	"gorm.io/hints"
-	"gorm.io/plugin/dbresolver"
+	"github.com/wubin1989/dbresolver"
+	"github.com/wubin1989/gorm/clause"
+	"github.com/wubin1989/hints"
 )
 
 func checkConds(conds []clause.Expression) error {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"gorm.io/gorm"
+	"github.com/wubin1989/gorm"
 
-	"gorm.io/gen/internal/model"
+	"github.com/wubin1989/gen/internal/model"
 )
 
 // ITableInfo table info interface

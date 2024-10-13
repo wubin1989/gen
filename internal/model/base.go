@@ -2,14 +2,17 @@ package model
 
 import (
 	"bytes"
+	"github.com/sirupsen/logrus"
 	"strings"
 
-	"gorm.io/gen/field"
+	"github.com/wubin1989/gen/field"
 )
 
 const (
 	// DefaultModelPkg ...
 	DefaultModelPkg = "model"
+	// DefaultDtoPkg ...
+	DefaultDtoPkg = "dto"
 )
 
 // Status sql status
@@ -126,6 +129,7 @@ var (
 		"tinytext":   func(string) string { return "string" },
 		"mediumtext": func(string) string { return "string" },
 		"longtext":   func(string) string { return "string" },
+		"bytea":      func(string) string { return "[]byte" },
 		"binary":     func(string) string { return "[]byte" },
 		"varbinary":  func(string) string { return "[]byte" },
 		"tinyblob":   func(string) string { return "[]byte" },
@@ -159,6 +163,14 @@ func (m dataTypeMap) Get(dataType, detailType string) string {
 	if convert, ok := m[strings.ToLower(dataType)]; ok {
 		return convert(detailType)
 	}
+	d := detailType
+	if strings.Contains(detailType, " ") {
+		d = detailType[:strings.Index(detailType, " ")]
+	}
+	if convert, ok := m[strings.ToLower(d)]; ok {
+		return convert(detailType)
+	}
+	logrus.Info(dataType+" ===> ", detailType)
 	return defaultDataType
 }
 
@@ -173,6 +185,7 @@ type Field struct {
 	GORMTag          field.GormTag
 	CustomGenType    string
 	Relation         *field.Relation
+	PriKey           bool
 }
 
 // Tags ...

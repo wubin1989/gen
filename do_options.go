@@ -1,4 +1,4 @@
-package gen
+package gormgen
 
 // DOOption gorm option interface
 type DOOption interface {

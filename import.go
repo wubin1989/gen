@@ -1,4 +1,4 @@
-package gen
+package gormgen
 
 import "strings"
 
@@ -8,15 +8,15 @@ var (
 		"database/sql",
 		"strings",
 		"",
-		"gorm.io/gorm",
-		"gorm.io/gorm/schema",
-		"gorm.io/gorm/clause",
+		"github.com/wubin1989/gorm",
+		"github.com/wubin1989/gorm/schema",
+		"github.com/wubin1989/gorm/clause",
 		"",
-		"gorm.io/gen",
-		"gorm.io/gen/field",
-		"gorm.io/gen/helper",
+		"github.com/wubin1989/gen",
+		"github.com/wubin1989/gen/field",
+		"github.com/wubin1989/gen/helper",
 		"",
-		"gorm.io/plugin/dbresolver",
+		"github.com/wubin1989/dbresolver",
 	)
 	unitTestImportList = new(importPkgS).Add(
 		"context",
@@ -24,8 +24,8 @@ var (
 		"strconv",
 		"testing",
 		"",
-		"gorm.io/driver/sqlite",
-		"gorm.io/gorm",
+		"github.com/wubin1989/sqlite",
+		"github.com/wubin1989/gorm",
 	)
 )
 

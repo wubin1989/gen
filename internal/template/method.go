@@ -57,11 +57,11 @@ func ({{.S}} {{.QueryStructName}}Do) Returning(value interface{}, columns ...str
 	return {{.S}}.withDO({{.S}}.DO.Returning(value, columns...))
 }
 
-func ({{.S}} {{.QueryStructName}}Do) Not(conds ...gen.Condition) {{.ReturnObject}} {
+func ({{.S}} {{.QueryStructName}}Do) Not(conds ...gormgen.Condition) {{.ReturnObject}} {
 	return {{.S}}.withDO({{.S}}.DO.Not(conds...))
 }
 
-func ({{.S}} {{.QueryStructName}}Do) Or(conds ...gen.Condition) {{.ReturnObject}} {
+func ({{.S}} {{.QueryStructName}}Do) Or(conds ...gormgen.Condition) {{.ReturnObject}} {
 	return {{.S}}.withDO({{.S}}.DO.Or(conds...))
 }
 
@@ -69,7 +69,7 @@ func ({{.S}} {{.QueryStructName}}Do) Select(conds ...field.Expr) {{.ReturnObject
 	return {{.S}}.withDO({{.S}}.DO.Select(conds...))
 }
 
-func ({{.S}} {{.QueryStructName}}Do) Where(conds ...gen.Condition) {{.ReturnObject}} {
+func ({{.S}} {{.QueryStructName}}Do) Where(conds ...gormgen.Condition) {{.ReturnObject}} {
 	return {{.S}}.withDO({{.S}}.DO.Where(conds...))
 }
 
@@ -105,7 +105,7 @@ func ({{.S}} {{.QueryStructName}}Do) Group(cols ...field.Expr) {{.ReturnObject}}
 	return {{.S}}.withDO({{.S}}.DO.Group(cols...))
 }
 
-func ({{.S}} {{.QueryStructName}}Do) Having(conds ...gen.Condition) {{.ReturnObject}} {
+func ({{.S}} {{.QueryStructName}}Do) Having(conds ...gormgen.Condition) {{.ReturnObject}} {
 	return {{.S}}.withDO({{.S}}.DO.Having(conds...))
 }
 
@@ -117,7 +117,7 @@ func ({{.S}} {{.QueryStructName}}Do) Offset(offset int) {{.ReturnObject}} {
 	return {{.S}}.withDO({{.S}}.DO.Offset(offset))
 }
 
-func ({{.S}} {{.QueryStructName}}Do) Scopes(funcs ...func(gen.Dao) gen.Dao) {{.ReturnObject}} {
+func ({{.S}} {{.QueryStructName}}Do) Scopes(funcs ...func(gormgen.Dao) gormgen.Dao) {{.ReturnObject}} {
 	return {{.S}}.withDO({{.S}}.DO.Scopes(funcs...))
 }
 
@@ -174,16 +174,16 @@ func ({{.S}} {{.QueryStructName}}Do) Find() ([]*{{.StructInfo.Package}}.{{.Struc
 	return result.([]*{{.StructInfo.Package}}.{{.StructInfo.Type}}), err
 }
 
-func ({{.S}} {{.QueryStructName}}Do) FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*{{.StructInfo.Package}}.{{.StructInfo.Type}}, err error) {
+func ({{.S}} {{.QueryStructName}}Do) FindInBatch(batchSize int, fc func(tx gormgen.Dao, batch int) error) (results []*{{.StructInfo.Package}}.{{.StructInfo.Type}}, err error) {
 	buf := make([]*{{.StructInfo.Package}}.{{.StructInfo.Type}}, 0, batchSize)
-	err = {{.S}}.DO.FindInBatches(&buf, batchSize, func(tx gen.Dao, batch int) error {
+	err = {{.S}}.DO.FindInBatches(&buf, batchSize, func(tx gormgen.Dao, batch int) error {
 		defer func() { results = append(results, buf...) }()
 		return fc(tx, batch)
 	})
 	return results, err
 }
 
-func ({{.S}} {{.QueryStructName}}Do) FindInBatches(result *[]*{{.StructInfo.Package}}.{{.StructInfo.Type}}, batchSize int, fc func(tx gen.Dao, batch int) error) error {
+func ({{.S}} {{.QueryStructName}}Do) FindInBatches(result *[]*{{.StructInfo.Package}}.{{.StructInfo.Type}}, batchSize int, fc func(tx gormgen.Dao, batch int) error) error {
 	return {{.S}}.DO.FindInBatches(result, batchSize, fc)
 }
 
@@ -254,12 +254,16 @@ func ({{.S}} {{.QueryStructName}}Do) Scan(result interface{}) (err error) {
 	return {{.S}}.DO.Scan(result)
 }
 
-func ({{.S}} {{.QueryStructName}}Do) Delete(models ...*{{.StructInfo.Package}}.{{.StructInfo.Type}}) (result gen.ResultInfo, err error) {
+func ({{.S}} {{.QueryStructName}}Do) Fetch(result interface{}) (err error) {
+	return {{.S}}.DO.Fetch(result)
+}
+
+func ({{.S}} {{.QueryStructName}}Do) Delete(models ...*{{.StructInfo.Package}}.{{.StructInfo.Type}}) (result gormgen.ResultInfo, err error) {
 	return {{.S}}.DO.Delete(models)
 }
 
-func ({{.S}} *{{.QueryStructName}}Do) withDO(do gen.Dao) (*{{.QueryStructName}}Do) {
-	{{.S}}.DO = *do.(*gen.DO)
+func ({{.S}} *{{.QueryStructName}}Do) withDO(do gormgen.Dao) (*{{.QueryStructName}}Do) {
+	{{.S}}.DO = *do.(*gormgen.DO)
 	return {{.S}}
 }
 
@@ -322,12 +326,12 @@ func Test_{{.QueryStructName}}Query(t *testing.T) {
 		t.Error("First() on table <{{.TableName}}> fail:", err)
 	}
 
-	_, err = _do.Where(primaryKey.IsNotNull()).FindInBatch(10, func(tx gen.Dao, batch int) error { return nil })
+	_, err = _do.Where(primaryKey.IsNotNull()).FindInBatch(10, func(tx gormgen.Dao, batch int) error { return nil })
 	if err != nil {
 		t.Error("FindInBatch() on table <{{.TableName}}> fail:", err)
 	}
 
-	err = _do.Where(primaryKey.IsNotNull()).FindInBatches(&[]*{{.StructInfo.Package}}.{{.ModelStructName}}{}, 10, func(tx gen.Dao, batch int) error { return nil })
+	err = _do.Where(primaryKey.IsNotNull()).FindInBatches(&[]*{{.StructInfo.Package}}.{{.ModelStructName}}{}, 10, func(tx gormgen.Dao, batch int) error { return nil })
 	if err != nil {
 		t.Error("FindInBatches() on table <{{.TableName}}> fail:", err)
 	}
@@ -352,7 +356,7 @@ func Test_{{.QueryStructName}}Query(t *testing.T) {
 		t.Error("Group() on table <{{.TableName}}> fail:", err)
 	}
 
-	_, err = _do.Scopes(func(dao gen.Dao) gen.Dao { return dao.Where(primaryKey.IsNotNull()) }).Find()
+	_, err = _do.Scopes(func(dao gormgen.Dao) gormgen.Dao { return dao.Where(primaryKey.IsNotNull()) }).Find()
 	if err != nil {
 		t.Error("Scopes() on table <{{.TableName}}> fail:", err)
 	}

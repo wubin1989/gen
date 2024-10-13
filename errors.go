@@ -1,4 +1,4 @@
-package gen
+package gormgen
 
 import "errors"
 

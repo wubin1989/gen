@@ -3,17 +3,18 @@ package generate
 import (
 	"context"
 	"fmt"
+	"github.com/golang/protobuf/protoc-gen-go/generator"
 	"reflect"
 	"strings"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils/tests"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/schema"
+	"github.com/wubin1989/gorm/utils/tests"
 
-	"gorm.io/gen/field"
-	"gorm.io/gen/helper"
-	"gorm.io/gen/internal/model"
-	"gorm.io/gen/internal/parser"
+	"github.com/wubin1989/gen/field"
+	"github.com/wubin1989/gen/helper"
+	"github.com/wubin1989/gen/internal/model"
+	"github.com/wubin1989/gen/internal/parser"
 )
 
 // GetQueryStructMeta generate db model by table name
@@ -36,6 +37,17 @@ func GetQueryStructMeta(db *gorm.DB, conf *model.Config) (*QueryStructMeta, erro
 		return nil, err
 	}
 
+	fields := getFields(db, conf, columns)
+	priKeyType := "string"
+	pbPrimaryProp := "Id"
+	for _, field := range fields {
+		if field.PriKey {
+			priKeyType = field.Type
+			pbPrimaryProp = generator.CamelCase(field.ColumnName)
+			break
+		}
+	}
+
 	return (&QueryStructMeta{
 		db:              db,
 		Source:          model.Table,
@@ -47,7 +59,9 @@ func GetQueryStructMeta(db *gorm.DB, conf *model.Config) (*QueryStructMeta, erro
 		S:               strings.ToLower(structName[0:1]),
 		StructInfo:      parser.Param{Type: structName, Package: conf.ModelPkg},
 		ImportPkgPaths:  conf.ImportPkgPaths,
-		Fields:          getFields(db, conf, columns),
+		Fields:          fields,
+		PriKeyType:      priKeyType,
+		PbPrimaryProp:   pbPrimaryProp,
 	}).addMethodFromAddMethodOpt(conf.GetModelMethods()...), nil
 }
 

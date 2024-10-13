@@ -7,14 +7,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/wubin1989/clickhouse"
+	"github.com/wubin1989/gen"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/mysql"
+	"github.com/wubin1989/postgres"
+	"github.com/wubin1989/sqlite"
+	"github.com/wubin1989/sqlserver"
 	"gopkg.in/yaml.v3"
-	"gorm.io/driver/clickhouse"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
-	"gorm.io/gen"
-	"gorm.io/gorm"
 )
 
 // DBType database type
@@ -31,8 +31,8 @@ const (
 
 // CmdParams is command line parameters
 type CmdParams struct {
-	DSN               string   `yaml:"dsn"`               // consult[https://gorm.io/docs/connecting_to_the_database.html]"
-	DB                string   `yaml:"db"`                // input mysql or postgres or sqlite or sqlserver. consult[https://gorm.io/docs/connecting_to_the_database.html]
+	DSN               string   `yaml:"dsn"`               // consult[https://github.com/wubin1989/docs/connecting_to_the_database.html]"
+	DB                string   `yaml:"db"`                // input mysql or postgres or sqlite or sqlserver. consult[https://github.com/wubin1989/docs/connecting_to_the_database.html]
 	Tables            []string `yaml:"tables"`            // enter the required data table or leave it blank
 	OnlyModel         bool     `yaml:"onlyModel"`         // only generate model
 	OutPath           string   `yaml:"outPath"`           // specify a directory for output
@@ -74,7 +74,7 @@ func connectDB(t DBType, dsn string) (*gorm.DB, error) {
 }
 
 // genModels is gorm/gen generated models
-func genModels(g *gen.Generator, db *gorm.DB, tables []string) (models []interface{}, err error) {
+func genModels(g *gormgen.Generator, db *gorm.DB, tables []string) (models []interface{}, err error) {
 	var tablesList []string
 	if len(tables) == 0 {
 		// Execute tasks for all tables in the database
@@ -112,8 +112,8 @@ func loadConfigFile(path string) (*CmdParams, error) {
 func argParse() *CmdParams {
 	// choose is file or flag
 	genPath := flag.String("c", "", "is path for gen.yml")
-	dsn := flag.String("dsn", "", "consult[https://gorm.io/docs/connecting_to_the_database.html]")
-	db := flag.String("db", "mysql", "input mysql|postgres|sqlite|sqlserver|clickhouse. consult[https://gorm.io/docs/connecting_to_the_database.html]")
+	dsn := flag.String("dsn", "", "consult[https://github.com/wubin1989/docs/connecting_to_the_database.html]")
+	db := flag.String("db", "mysql", "input mysql|postgres|sqlite|sqlserver|clickhouse. consult[https://github.com/wubin1989/docs/connecting_to_the_database.html]")
 	tableList := flag.String("tables", "", "enter the required data table or leave it blank")
 	onlyModel := flag.Bool("onlyModel", false, "only generate models (without query file)")
 	outPath := flag.String("outPath", "./dao/query", "specify a directory for output")
@@ -184,7 +184,7 @@ func main() {
 		log.Fatalln("connect db server fail:", err)
 	}
 
-	g := gen.NewGenerator(gen.Config{
+	g := gormgen.NewGenerator(gormgen.Config{
 		OutPath:           config.OutPath,
 		OutFile:           config.OutFile,
 		ModelPkgPath:      config.ModelPkgName,

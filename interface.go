@@ -1,13 +1,13 @@
-package gen
+package gormgen
 
 import (
 	"database/sql"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/clause"
+	"github.com/wubin1989/gorm/schema"
 
-	"gorm.io/gen/field"
+	"github.com/wubin1989/gen/field"
 )
 
 type (
@@ -84,6 +84,7 @@ type Dao interface {
 	Row() *sql.Row
 	Rows() (*sql.Rows, error)
 	Scan(dest interface{}) error
+	Fetch(dest interface{}) error
 	Pluck(column field.Expr, dest interface{}) error
 	ScanRows(rows *sql.Rows, dest interface{}) error
 }

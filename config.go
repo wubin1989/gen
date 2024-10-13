@@ -1,4 +1,4 @@
-package gen
+package gormgen
 
 import (
 	"fmt"
@@ -6,10 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/utils/tests"
+	"github.com/gobwas/glob"
 
-	"gorm.io/gen/internal/model"
+	"github.com/wubin1989/gorm"
+	"github.com/wubin1989/gorm/utils/tests"
+
+	"github.com/wubin1989/gen/internal/model"
 )
 
 // GenerateMode generate mode
@@ -30,9 +32,11 @@ const (
 type Config struct {
 	db *gorm.DB // db connection
 
+	RootDir      string // project root path
 	OutPath      string // query code path
 	OutFile      string // query code file name, default: gen.go
 	ModelPkgPath string // generated model code's package name
+	DtoPkgPath   string // generated dto code's package name
 	WithUnitTest bool   // generate unit test for query code
 
 	// generate model global configuration
@@ -46,6 +50,7 @@ type Config struct {
 
 	queryPkgName   string // generated query code's package name
 	modelPkgPath   string // model pkg path in target project
+	dtoPkgPath     string // dto pkg path in target project
 	dbNameOpts     []model.SchemaNameOpt
 	importPkgPaths []string
 
@@ -55,9 +60,15 @@ type Config struct {
 	fileNameNS  func(tableName string) (fileName string)
 
 	dataTypeMap    map[string]func(columnType gorm.ColumnType) (dataType string)
-	fieldJSONTagNS func(columnName string) (tagContent string)
+	fieldJSONTagNS func(columnName string, columnType string) (tagContent string)
 
 	modelOpts []ModelOpt
+
+	ConfigPackage string
+
+	FilterTableGlob  glob.Glob
+	ExcludeTableGlob glob.Glob
+	GenGenGo         bool
 }
 
 // WithOpts set global  model options
@@ -99,7 +110,7 @@ func (cfg *Config) WithDataTypeMap(newMap map[string]func(columnType gorm.Column
 }
 
 // WithJSONTagNameStrategy specify json tag naming strategy
-func (cfg *Config) WithJSONTagNameStrategy(ns func(columnName string) (tagContent string)) {
+func (cfg *Config) WithJSONTagNameStrategy(ns func(columnName string, columnType string) (tagContent string)) {
 	cfg.fieldJSONTagNS = ns
 }
 
@@ -119,6 +130,9 @@ func (cfg *Config) WithImportPkgPath(paths ...string) {
 func (cfg *Config) Revise() (err error) {
 	if strings.TrimSpace(cfg.ModelPkgPath) == "" {
 		cfg.ModelPkgPath = model.DefaultModelPkg
+	}
+	if strings.TrimSpace(cfg.DtoPkgPath) == "" {
+		cfg.DtoPkgPath = model.DefaultDtoPkg
 	}
 
 	cfg.OutPath, err = filepath.Abs(cfg.OutPath)
