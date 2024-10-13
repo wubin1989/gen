@@ -55,8 +55,6 @@ type RowsAffected int64
 
 var concurrent = runtime.NumCPU()
 
-func init() { runtime.GOMAXPROCS(runtime.NumCPU()) }
-
 // NewGenerator create a new generator
 func NewGenerator(cfg Config) *Generator {
 	if err := cfg.Revise(); err != nil {
@@ -642,11 +640,9 @@ func (g *Generator) generateSingleQueryFile(data *genInfo) (err error) {
 	if structPkgPath == "" {
 		structPkgPath = g.modelPkgPath
 	}
-
-	importPkgs := importList.Add(structPkgPath).Add(getImportPkgPaths(data)...).Paths()
 	err = render(tmpl.Header, &buf, map[string]interface{}{
 		"Package":        g.queryPkgName,
-		"ImportPkgPaths": importPkgs,
+		"ImportPkgPaths": importList.Add(g.importPkgPaths...).Add(structPkgPath).Add(getImportPkgPaths(data)...).Paths(),
 	})
 	if err != nil {
 		return errors.WithStack(err)
@@ -844,7 +840,7 @@ func (g *Generator) outputWithOpt(fileName string, content []byte, opt *imports.
 		}
 		return fmt.Errorf("cannot format file: %w", err)
 	}
-	return ioutil.WriteFile(fileName, result, 0640)
+	return os.WriteFile(fileName, result, 0640)
 }
 
 func (g *Generator) pushQueryStructMeta(meta *generate.QueryStructMeta) (*genInfo, error) {

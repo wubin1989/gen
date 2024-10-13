@@ -30,6 +30,11 @@ func (field Field) In(values ...driver.Valuer) Expr {
 	return expr{e: clause.IN{Column: field.RawExpr(), Values: field.toSlice(values...)}}
 }
 
+// NotIn ...
+func (field Field) NotIn(values ...driver.Valuer) Expr {
+	return expr{e: clause.Not(field.In(values...).expression())}
+}
+
 // Gt ...
 func (field Field) Gt(value driver.Valuer) Expr {
 	return expr{e: clause.Gt{Column: field.RawExpr(), Value: value}}
@@ -68,6 +73,11 @@ func (field Field) Sum() Field {
 // IfNull ...
 func (field Field) IfNull(value driver.Valuer) Expr {
 	return field.ifNull(value)
+}
+
+// Field ...
+func (field Field) Field(value []interface{}) Expr {
+	return field.field(value)
 }
 
 func (field Field) toSlice(values ...driver.Valuer) []interface{} {

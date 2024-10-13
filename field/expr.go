@@ -24,7 +24,7 @@ type Expr interface {
 	Build(clause.Builder)
 
 	As(alias string) Expr
-	ColumnName() sql
+	IColumnName
 	BuildColumn(*gorm.Statement, ...BuildOpt) sql
 	BuildWithArgs(*gorm.Statement) (query sql, args []interface{})
 	RawExpr() expression
@@ -48,9 +48,14 @@ type Expr interface {
 type OrderExpr interface {
 	Expr
 	Desc() Expr
+	Asc() Expr
 }
 
 type expression interface{}
+
+type IColumnName interface {
+	ColumnName() sql
+}
 
 type sql string
 
@@ -190,6 +195,10 @@ func (e expr) Avg() Float64 {
 	return Float64{e.setE(clause.Expr{SQL: "AVG(?)", Vars: []interface{}{e.RawExpr()}})}
 }
 
+func (e expr) Abs() Float64 {
+	return Float64{e.setE(clause.Expr{SQL: "ABS(?)", Vars: []interface{}{e.RawExpr()}})}
+}
+
 func (e expr) Null() AssignExpr {
 	return e.setE(clause.Eq{Column: e.col.Name, Value: nil})
 }
@@ -252,7 +261,7 @@ func (e expr) ConcatCol(cols ...Expr) Expr {
 		vars = append(vars, col.RawExpr())
 	}
 	return Field{e.setE(clause.Expr{
-		SQL:  fmt.Sprintf("Concat(%s)", strings.Join(placeholders, ",")),
+		SQL:  fmt.Sprintf("CONCAT(%s)", strings.Join(placeholders, ",")),
 		Vars: vars,
 	})}
 }
@@ -266,8 +275,14 @@ func (e expr) As(alias string) Expr {
 	return e
 }
 
+// Desc sort by desc
 func (e expr) Desc() Expr {
 	return e.setE(clause.Expr{SQL: "? DESC", Vars: []interface{}{e.RawExpr()}})
+}
+
+// Asc sort by asc
+func (e expr) Asc() Expr {
+	return e.setE(clause.Expr{SQL: "? ASC", Vars: []interface{}{e.RawExpr()}})
 }
 
 // ======================== general experssion ========================
@@ -401,6 +416,10 @@ func (e expr) isPure() bool {
 
 func (e expr) ifNull(value interface{}) expr {
 	return e.setE(clause.Expr{SQL: "IFNULL(?,?)", Vars: []interface{}{e.RawExpr(), value}})
+}
+
+func (e expr) field(value interface{}) expr {
+	return e.setE(clause.Expr{SQL: "FIELD(?, ?)", Vars: []interface{}{e.RawExpr(), value}, WithoutParentheses: true})
 }
 
 func (e expr) sum() expr {

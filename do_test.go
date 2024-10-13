@@ -142,6 +142,24 @@ func TestDO_methods(t *testing.T) {
 			Result:       "WHERE `id` = ?",
 		},
 		{
+			Expr:   u.Where(u.Name.Substring(1)),
+			Result: "WHERE SUBSTRING(`name`,1)",
+		},
+		{
+			Expr:         u.Where(u.Name.Substring(1, 6), u.ID.Eq(10)),
+			ExpectedVars: []interface{}{uint(10)},
+			Result:       "WHERE SUBSTRING(`name`,1,6) AND `id` = ?",
+		},
+		{
+			Expr:         u.Where(u.Name.Substr(1), u.ID.Eq(10)),
+			ExpectedVars: []interface{}{uint(10)},
+			Result:       "WHERE SUBSTR(`name`,1) AND `id` = ?",
+		},
+		{
+			Expr:   u.Where(u.Name.Substr(1, 6)),
+			Result: "WHERE SUBSTR(`name`,1,6)",
+		},
+		{
 			Expr:         u.Where(u.Name.Eq("tom"), u.Age.Gt(18)),
 			ExpectedVars: []interface{}{"tom", 18},
 			Result:       "WHERE `name` = ? AND `age` > ?",
@@ -161,6 +179,18 @@ func TestDO_methods(t *testing.T) {
 		{
 			Expr:   u.Order(u.ID.Desc()).Order(u.Age),
 			Result: "ORDER BY `id` DESC,`age`",
+		},
+		{
+			Expr:   u.Order(u.ID.Asc()),
+			Result: "ORDER BY `id` ASC",
+		},
+		{
+			Expr:   u.Order(u.ID.Asc(), u.Age),
+			Result: "ORDER BY `id` ASC,`age`",
+		},
+		{
+			Expr:   u.Order(u.ID.Asc()).Order(u.Age),
+			Result: "ORDER BY `id` ASC,`age`",
 		},
 		{
 			Expr:   u.Clauses(hints.New("hint")).Select(),

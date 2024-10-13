@@ -87,4 +87,6 @@ type Dao interface {
 	Fetch(dest interface{}) error
 	Pluck(column field.Expr, dest interface{}) error
 	ScanRows(rows *sql.Rows, dest interface{}) error
+
+	AddError(err error) error
 }
