@@ -19,7 +19,6 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"github.com/unionj-cloud/toolkit/astutils"
-	v3 "github.com/unionj-cloud/toolkit/protobuf/v3"
 	"github.com/unionj-cloud/toolkit/sliceutils"
 
 	"github.com/wubin1989/gorm"
@@ -323,28 +322,28 @@ func (g *Generator) GenerateSvcGo() {
 	g.info("Generate code svc.go done.")
 }
 
-// GenerateSvcImplGo ...
-func (g *Generator) GenerateSvcImplGo() {
-	g.info("Start generating svcimpl.go.")
-
-	if err := g.generateSvcImplGo(); err != nil {
-		g.db.Logger.Error(context.Background(), "generate svcimpl.go fail: %s", err)
-		panic("generate svcimpl.go fail")
-	}
-
-	g.info("Generate code svcimpl.go done.")
-}
-
 // GenerateSvcImplGrpc ...
-func (g *Generator) GenerateSvcImplGrpc(grpcService v3.Service) {
+func (g *Generator) GenerateSvcImplGrpc() {
 	g.info("Start generating grpc implementation code in svcimpl.go.")
 
-	if err := g.generateSvcImplGrpc(grpcService); err != nil {
-		g.db.Logger.Error(context.Background(), "generate grpc implementation code in svcimpl.go fail: %s", err)
+	if err := g.generateSvcImplGrpc(); err != nil {
+		g.db.Logger.Error(context.Background(), "generate svcimpl.go fail: %s", err)
 		panic("generate grpc implementation code in svcimpl.go fail")
 	}
 
 	g.info("Generate grpc implementation code in svcimpl.go done.")
+}
+
+// GenerateSvcImplRest ...
+func (g *Generator) GenerateSvcImplRest() {
+	g.info("Start generating rest implementation code in svcimpl.go.")
+
+	if err := g.generateSvcImplRest(); err != nil {
+		g.db.Logger.Error(context.Background(), "generate grpc implementation code in svcimpl.go fail: %s", err)
+		panic("generate rest implementation code in svcimpl.go fail")
+	}
+
+	g.info("Generate rest implementation code in svcimpl.go done.")
 }
 
 func (g *Generator) filterNewModels(meta astutils.InterfaceMeta) []*generate.QueryStructMeta {
@@ -446,8 +445,8 @@ func (g *Generator) generateSvcGo() error {
 	return nil
 }
 
-// generateSvcImplGo generate svcimpl.go code and save to file
-func (g *Generator) generateSvcImplGo() error {
+// generateSvcImplGrpc generate grpc implementation code in svcimpl.go and save file
+func (g *Generator) generateSvcImplGrpc() error {
 	if len(g.models) == 0 {
 		return nil
 	}
@@ -470,7 +469,7 @@ func (g *Generator) generateSvcImplGo() error {
 	models := g.filterNewModelsGrpc(interfaceMeta)
 	var buf bytes.Buffer
 	for _, model := range models {
-		if err = render(tmpl.AppendSvcImpl, &buf, struct {
+		if err = render(tmpl.AppendSvcImplGrpc, &buf, struct {
 			*generate.QueryStructMeta
 			InterfaceName string
 		}{
@@ -494,7 +493,7 @@ func (g *Generator) generateSvcImplGo() error {
 
 	// fix import block
 	var importBuf bytes.Buffer
-	if err = render(tmpl.SvcImplImport, &importBuf, struct {
+	if err = render(tmpl.SvcImplImportGrpc, &importBuf, struct {
 		ConfigPackage        string
 		DtoPackage           string
 		ModelPackage         string
@@ -898,14 +897,14 @@ func (g *Generator) GetPkgPath(filePath string) string {
 	return pkgs[0].PkgPath
 }
 
-func (g *Generator) generateSvcImplGrpc(grpcService v3.Service) error {
+func (g *Generator) generateSvcImplRest() error {
 	if len(g.models) == 0 {
 		return nil
 	}
 	svcImplFile := filepath.Join(g.RootDir, "svcimpl.go")
-	_, err := os.Stat(svcImplFile)
-	if err != nil {
-		return errors.WithStack(err)
+	var err error
+	if _, err = os.Stat(svcImplFile); err != nil {
+		return errors.New("svcimpl.go file is not found, maybe the project has not been initialized yet")
 	}
 	var interfaceMeta astutils.InterfaceMeta
 	interfaceMeta.Name = strcase.ToCamel(strcase.ToCamel(filepath.Base(g.RootDir)))
@@ -913,10 +912,15 @@ func (g *Generator) generateSvcImplGrpc(grpcService v3.Service) error {
 	astutils.CollectStructsInFolder(g.RootDir, sc)
 	interfaceMeta.Methods = sc.Methods[interfaceMeta.Name+"Impl"]
 	g.info("New content will be append to svcimpl.go file")
-	models := g.filterNewModelsGrpc(interfaceMeta)
+	var f *os.File
+	if f, err = os.OpenFile(svcImplFile, os.O_APPEND, os.ModePerm); err != nil {
+		return errors.WithStack(err)
+	}
+	defer f.Close()
+	models := g.filterNewModels(interfaceMeta)
 	var buf bytes.Buffer
 	for _, model := range models {
-		if err = render(tmpl.AppendSvcImplGrpc, &buf, struct {
+		if err = render(tmpl.AppendSvcImplRest, &buf, struct {
 			*generate.QueryStructMeta
 			InterfaceName string
 		}{
@@ -927,24 +931,32 @@ func (g *Generator) generateSvcImplGrpc(grpcService v3.Service) error {
 		}
 	}
 	var original []byte
-	if original, err = ioutil.ReadFile(svcImplFile); err != nil {
+	if original, err = ioutil.ReadAll(f); err != nil {
 		return errors.WithStack(err)
 	}
 	original = append(original, buf.Bytes()...)
 
-	transGrpcPkg := g.GetPkgPath(filepath.Join(g.RootDir, "transport", "grpc"))
+	confPkg := g.GetPkgPath(filepath.Join(g.RootDir, "config"))
+	dtoPkg := g.GetPkgPath(filepath.Join(g.RootDir, "dto"))
+	queryPkg := g.GetPkgPath(g.OutPath)
 
 	// fix import block
 	var importBuf bytes.Buffer
-	if err = render(tmpl.SvcImplImportGrpc, &importBuf, struct {
-		TransportGrpcPackage string
+	if err = render(tmpl.SvcImplImportRest, &importBuf, struct {
+		ConfigPackage string
+		DtoPackage    string
+		ModelPackage  string
+		QueryPackage  string
 	}{
-		TransportGrpcPackage: transGrpcPkg,
+		ConfigPackage: confPkg,
+		DtoPackage:    dtoPkg,
+		ModelPackage:  g.modelPkgPath,
+		QueryPackage:  queryPkg,
 	}); err != nil {
 		return errors.WithStack(err)
 	}
 	original = astutils.AppendImportStatements(original, importBuf.Bytes())
-	original = astutils.GrpcRelatedModify(original, interfaceMeta.Name, grpcService.Name)
+
 	if err = g.outputWithOpt(svcImplFile, original, &imports.Options{
 		TabWidth:  8,
 		TabIndent: true,

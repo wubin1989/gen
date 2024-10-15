@@ -1,6 +1,6 @@
 package template
 
-const AppendSvcImpl = `
+const AppendSvcImplGrpc = `
 // PostGen{{.ModelStructName}}Rpc {{.StructComment}}
 ` + NotEditMarkForGDDShort + `
 func (receiver *{{.InterfaceName}}Impl) PostGen{{.ModelStructName}}Rpc(ctx context.Context, body *pb.{{.ModelStructName}}) (data *pb.{{.ModelStructName}}, err error) {
@@ -58,6 +58,56 @@ func (receiver *{{.InterfaceName}}Impl) GetGen{{.ModelStructName}}sRpc(ctx conte
 	}
 	data = new(pb.Page)
 	copier.DeepCopy(paginated, data)
+	return
+}
+
+`
+
+const AppendSvcImplRest = `
+// PostGen{{.ModelStructName}} {{.StructComment}}
+` + NotEditMarkForGDDShort + `
+func (receiver *{{.InterfaceName}}Impl) PostGen{{.ModelStructName}}(ctx context.Context, body model.{{.ModelStructName}}) (model.{{.ModelStructName}}, error) {
+	u := receiver.q.{{.ModelStructName}}
+	err := u.WithContext(ctx).Create(&body)
+	return body, errors.WithStack(err)
+}
+
+// GetGen{{.ModelStructName}}_Id {{.StructComment}}
+` + NotEditMarkForGDDShort + `
+func (receiver *{{.InterfaceName}}Impl) GetGen{{.ModelStructName}}(ctx context.Context, body model.{{.ModelStructName}}) (model.{{.ModelStructName}}, error) {
+	u := receiver.q.{{.ModelStructName}}
+	data, err := u.WithContext(ctx).Where(u.ID.Eq(body.ID)).First()
+	if err != nil {
+		return model.{{.ModelStructName}}{}, errors.WithStack(err)
+	}
+	return *data, nil
+}
+
+// PutGen{{.ModelStructName}} {{.StructComment}}
+` + NotEditMarkForGDDShort + `
+func (receiver *{{.InterfaceName}}Impl) PutGen{{.ModelStructName}}(ctx context.Context, body model.{{.ModelStructName}}) error {
+	u := receiver.q.{{.ModelStructName}}
+	_, err := u.WithContext(ctx).Where(u.ID.Eq(body.ID)).Updates(body)
+	return errors.WithStack(err)
+}
+
+// DeleteGen{{.ModelStructName}}_Id {{.StructComment}}
+` + NotEditMarkForGDDShort + `
+func (receiver *{{.InterfaceName}}Impl) DeleteGen{{.ModelStructName}}(ctx context.Context, body model.{{.ModelStructName}}) error {
+	u := receiver.q.{{.ModelStructName}}
+	_, err := u.WithContext(ctx).Where(u.ID.Eq(body.ID)).Delete()
+	return errors.WithStack(err)
+}
+
+// GetGen{{.ModelStructName}}s {{.StructComment}}
+` + NotEditMarkForGDDShort + `
+func (receiver *{{.InterfaceName}}Impl) GetGen{{.ModelStructName}}s(ctx context.Context, parameter dto.Parameter) (data dto.Page, err error) {
+	resCxt := receiver.pg.With(receiver.q.Db().Model(&model.{{.ModelStructName}}{})).Request(parameter)
+	paginated := resCxt.Response(&[]model.{{.ModelStructName}}{})
+	if resCxt.Error() != nil {
+		return dto.Page{}, errors.WithStack(resCxt.Error())
+	}
+	copier.DeepCopy(paginated, &data)
 	return
 }
 
