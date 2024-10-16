@@ -28,7 +28,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
-	github.com/lithammer/shortuuid/v4 v4.0.0 // indirect
 	github.com/mholt/archiver/v3 v3.5.1 // indirect
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
