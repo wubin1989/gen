@@ -106,13 +106,13 @@ func ({{.S}} *{{.QueryStructName}}) updateTableName(table string) *{{.QueryStruc
 `
 
 	cloneMethod = `
-func ({{.S}} {{.QueryStructName}}) clone(db *gorm.DB) {{.QueryStructName}} {
+func ({{.S}} {{.QueryStructName}}) Clone(db *gorm.DB) {{.QueryStructName}} {
 	{{.S}}.{{.QueryStructName}}Do.ReplaceConnPool(db.Statement.ConnPool)
 	return {{.S}}
 }
 `
 	replaceMethod = `
-func ({{.S}} {{.QueryStructName}}) replaceDB(db *gorm.DB) {{.QueryStructName}} {
+func ({{.S}} {{.QueryStructName}}) ReplaceDB(db *gorm.DB) {{.QueryStructName}} {
 	{{.S}}.{{.QueryStructName}}Do.ReplaceDB(db)
 	return {{.S}}
 }

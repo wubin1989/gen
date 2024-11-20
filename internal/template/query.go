@@ -43,7 +43,7 @@ func (q *Query) Clone(db *gorm.DB) *Query {
 	return &Query{
 		db: db,
 		{{range $name,$d :=.Data -}}
-		{{$d.ModelStructName}}: q.{{$d.ModelStructName}}.clone(db),
+		{{$d.ModelStructName}}: q.{{$d.ModelStructName}}.Clone(db),
 		{{end}}
 	}
 }
@@ -64,7 +64,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
 		db: db,
 		{{range $name,$d :=.Data -}}
-		{{$d.ModelStructName}}: q.{{$d.ModelStructName}}.replaceDB(db),
+		{{$d.ModelStructName}}: q.{{$d.ModelStructName}}.ReplaceDB(db),
 		{{end}}
 	}
 }
