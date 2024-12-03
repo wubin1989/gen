@@ -37,6 +37,9 @@ func getFields(db *gorm.DB, conf *model.Config, columns []*model.Column) (fields
 		} else if db.NamingStrategy != nil {
 			m.Name = db.NamingStrategy.SchemaName(m.Name)
 		}
+		if strings.HasSuffix(m.ColumnName, "_") {
+			m.Name = m.Name + "_"
+		}
 
 		fields = append(fields, m)
 	}
