@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 
@@ -26,6 +27,7 @@ func (c *Column) SetDataTypeMap(m map[string]func(columnType gorm.ColumnType) (d
 
 // GetDataType get data type
 func (c *Column) GetDataType() (fieldtype string) {
+	logrus.Debugf("%s %s %s", c.TableName, c.Name(), c.DatabaseTypeName())
 	if mapping, ok := c.dataTypeMap[c.DatabaseTypeName()]; ok {
 		return mapping(c.ColumnType)
 	}
