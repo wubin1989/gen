@@ -6,18 +6,17 @@ package query
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/wubin1989/gorm"
-	"github.com/wubin1989/gorm/clause"
-	"github.com/wubin1989/gorm/schema"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 
 	"gorm.io/gen"
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
 
-	"gorm.io/gen/tests/.gen/dal_4/model"
+	"gorm.io/gen/tests/.expect/dal_test_relation/model"
 )
 
 func newCreditCard(db *gorm.DB, opts ...gen.DOOption) creditCard {
@@ -81,7 +80,7 @@ func (c *creditCard) updateTableName(table string) *creditCard {
 	return c
 }
 
-func (c *creditCard) WithContext(ctx context.Context) ICreditCardDo {
+func (c *creditCard) WithContext(ctx context.Context) *creditCardDo {
 	return c.creditCardDo.WithContext(ctx)
 }
 
@@ -123,158 +122,95 @@ func (c creditCard) replaceDB(db *gorm.DB) creditCard {
 
 type creditCardDo struct{ gen.DO }
 
-type ICreditCardDo interface {
-	gen.SubQuery
-	Debug() ICreditCardDo
-	WithContext(ctx context.Context) ICreditCardDo
-	WithResult(fc func(tx gen.Dao)) gen.ResultInfo
-	ReplaceDB(db *gorm.DB)
-	ReadDB() ICreditCardDo
-	WriteDB() ICreditCardDo
-	As(alias string) gen.Dao
-	Session(config *gorm.Session) ICreditCardDo
-	Columns(cols ...field.Expr) gen.Columns
-	Clauses(conds ...clause.Expression) ICreditCardDo
-	Not(conds ...gen.Condition) ICreditCardDo
-	Or(conds ...gen.Condition) ICreditCardDo
-	Select(conds ...field.Expr) ICreditCardDo
-	Where(conds ...gen.Condition) ICreditCardDo
-	Order(conds ...field.Expr) ICreditCardDo
-	Distinct(cols ...field.Expr) ICreditCardDo
-	Omit(cols ...field.Expr) ICreditCardDo
-	Join(table schema.Tabler, on ...field.Expr) ICreditCardDo
-	LeftJoin(table schema.Tabler, on ...field.Expr) ICreditCardDo
-	RightJoin(table schema.Tabler, on ...field.Expr) ICreditCardDo
-	Group(cols ...field.Expr) ICreditCardDo
-	Having(conds ...gen.Condition) ICreditCardDo
-	Limit(limit int) ICreditCardDo
-	Offset(offset int) ICreditCardDo
-	Count() (count int64, err error)
-	Scopes(funcs ...func(gen.Dao) gen.Dao) ICreditCardDo
-	Unscoped() ICreditCardDo
-	Create(values ...*model.CreditCard) error
-	CreateInBatches(values []*model.CreditCard, batchSize int) error
-	Save(values ...*model.CreditCard) error
-	First() (*model.CreditCard, error)
-	Take() (*model.CreditCard, error)
-	Last() (*model.CreditCard, error)
-	Find() ([]*model.CreditCard, error)
-	FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*model.CreditCard, err error)
-	FindInBatches(result *[]*model.CreditCard, batchSize int, fc func(tx gen.Dao, batch int) error) error
-	Pluck(column field.Expr, dest interface{}) error
-	Delete(...*model.CreditCard) (info gen.ResultInfo, err error)
-	Update(column field.Expr, value interface{}) (info gen.ResultInfo, err error)
-	UpdateSimple(columns ...field.AssignExpr) (info gen.ResultInfo, err error)
-	Updates(value interface{}) (info gen.ResultInfo, err error)
-	UpdateColumn(column field.Expr, value interface{}) (info gen.ResultInfo, err error)
-	UpdateColumnSimple(columns ...field.AssignExpr) (info gen.ResultInfo, err error)
-	UpdateColumns(value interface{}) (info gen.ResultInfo, err error)
-	UpdateFrom(q gen.SubQuery) gen.Dao
-	Attrs(attrs ...field.AssignExpr) ICreditCardDo
-	Assign(attrs ...field.AssignExpr) ICreditCardDo
-	Joins(fields ...field.RelationField) ICreditCardDo
-	Preload(fields ...field.RelationField) ICreditCardDo
-	FirstOrInit() (*model.CreditCard, error)
-	FirstOrCreate() (*model.CreditCard, error)
-	FindByPage(offset int, limit int) (result []*model.CreditCard, count int64, err error)
-	ScanByPage(result interface{}, offset int, limit int) (count int64, err error)
-	Rows() (*sql.Rows, error)
-	Row() *sql.Row
-	Scan(result interface{}) (err error)
-	Returning(value interface{}, columns ...string) ICreditCardDo
-	UnderlyingDB() *gorm.DB
-	schema.Tabler
-}
-
-func (c creditCardDo) Debug() ICreditCardDo {
+func (c creditCardDo) Debug() *creditCardDo {
 	return c.withDO(c.DO.Debug())
 }
 
-func (c creditCardDo) WithContext(ctx context.Context) ICreditCardDo {
+func (c creditCardDo) WithContext(ctx context.Context) *creditCardDo {
 	return c.withDO(c.DO.WithContext(ctx))
 }
 
-func (c creditCardDo) ReadDB() ICreditCardDo {
+func (c creditCardDo) ReadDB() *creditCardDo {
 	return c.Clauses(dbresolver.Read)
 }
 
-func (c creditCardDo) WriteDB() ICreditCardDo {
+func (c creditCardDo) WriteDB() *creditCardDo {
 	return c.Clauses(dbresolver.Write)
 }
 
-func (c creditCardDo) Session(config *gorm.Session) ICreditCardDo {
+func (c creditCardDo) Session(config *gorm.Session) *creditCardDo {
 	return c.withDO(c.DO.Session(config))
 }
 
-func (c creditCardDo) Clauses(conds ...clause.Expression) ICreditCardDo {
+func (c creditCardDo) Clauses(conds ...clause.Expression) *creditCardDo {
 	return c.withDO(c.DO.Clauses(conds...))
 }
 
-func (c creditCardDo) Returning(value interface{}, columns ...string) ICreditCardDo {
+func (c creditCardDo) Returning(value interface{}, columns ...string) *creditCardDo {
 	return c.withDO(c.DO.Returning(value, columns...))
 }
 
-func (c creditCardDo) Not(conds ...gen.Condition) ICreditCardDo {
+func (c creditCardDo) Not(conds ...gen.Condition) *creditCardDo {
 	return c.withDO(c.DO.Not(conds...))
 }
 
-func (c creditCardDo) Or(conds ...gen.Condition) ICreditCardDo {
+func (c creditCardDo) Or(conds ...gen.Condition) *creditCardDo {
 	return c.withDO(c.DO.Or(conds...))
 }
 
-func (c creditCardDo) Select(conds ...field.Expr) ICreditCardDo {
+func (c creditCardDo) Select(conds ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.Select(conds...))
 }
 
-func (c creditCardDo) Where(conds ...gen.Condition) ICreditCardDo {
+func (c creditCardDo) Where(conds ...gen.Condition) *creditCardDo {
 	return c.withDO(c.DO.Where(conds...))
 }
 
-func (c creditCardDo) Order(conds ...field.Expr) ICreditCardDo {
+func (c creditCardDo) Order(conds ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.Order(conds...))
 }
 
-func (c creditCardDo) Distinct(cols ...field.Expr) ICreditCardDo {
+func (c creditCardDo) Distinct(cols ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.Distinct(cols...))
 }
 
-func (c creditCardDo) Omit(cols ...field.Expr) ICreditCardDo {
+func (c creditCardDo) Omit(cols ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.Omit(cols...))
 }
 
-func (c creditCardDo) Join(table schema.Tabler, on ...field.Expr) ICreditCardDo {
+func (c creditCardDo) Join(table schema.Tabler, on ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.Join(table, on...))
 }
 
-func (c creditCardDo) LeftJoin(table schema.Tabler, on ...field.Expr) ICreditCardDo {
+func (c creditCardDo) LeftJoin(table schema.Tabler, on ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.LeftJoin(table, on...))
 }
 
-func (c creditCardDo) RightJoin(table schema.Tabler, on ...field.Expr) ICreditCardDo {
+func (c creditCardDo) RightJoin(table schema.Tabler, on ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.RightJoin(table, on...))
 }
 
-func (c creditCardDo) Group(cols ...field.Expr) ICreditCardDo {
+func (c creditCardDo) Group(cols ...field.Expr) *creditCardDo {
 	return c.withDO(c.DO.Group(cols...))
 }
 
-func (c creditCardDo) Having(conds ...gen.Condition) ICreditCardDo {
+func (c creditCardDo) Having(conds ...gen.Condition) *creditCardDo {
 	return c.withDO(c.DO.Having(conds...))
 }
 
-func (c creditCardDo) Limit(limit int) ICreditCardDo {
+func (c creditCardDo) Limit(limit int) *creditCardDo {
 	return c.withDO(c.DO.Limit(limit))
 }
 
-func (c creditCardDo) Offset(offset int) ICreditCardDo {
+func (c creditCardDo) Offset(offset int) *creditCardDo {
 	return c.withDO(c.DO.Offset(offset))
 }
 
-func (c creditCardDo) Scopes(funcs ...func(gen.Dao) gen.Dao) ICreditCardDo {
+func (c creditCardDo) Scopes(funcs ...func(gen.Dao) gen.Dao) *creditCardDo {
 	return c.withDO(c.DO.Scopes(funcs...))
 }
 
-func (c creditCardDo) Unscoped() ICreditCardDo {
+func (c creditCardDo) Unscoped() *creditCardDo {
 	return c.withDO(c.DO.Unscoped())
 }
 
@@ -340,22 +276,22 @@ func (c creditCardDo) FindInBatches(result *[]*model.CreditCard, batchSize int, 
 	return c.DO.FindInBatches(result, batchSize, fc)
 }
 
-func (c creditCardDo) Attrs(attrs ...field.AssignExpr) ICreditCardDo {
+func (c creditCardDo) Attrs(attrs ...field.AssignExpr) *creditCardDo {
 	return c.withDO(c.DO.Attrs(attrs...))
 }
 
-func (c creditCardDo) Assign(attrs ...field.AssignExpr) ICreditCardDo {
+func (c creditCardDo) Assign(attrs ...field.AssignExpr) *creditCardDo {
 	return c.withDO(c.DO.Assign(attrs...))
 }
 
-func (c creditCardDo) Joins(fields ...field.RelationField) ICreditCardDo {
+func (c creditCardDo) Joins(fields ...field.RelationField) *creditCardDo {
 	for _, _f := range fields {
 		c = *c.withDO(c.DO.Joins(_f))
 	}
 	return &c
 }
 
-func (c creditCardDo) Preload(fields ...field.RelationField) ICreditCardDo {
+func (c creditCardDo) Preload(fields ...field.RelationField) *creditCardDo {
 	for _, _f := range fields {
 		c = *c.withDO(c.DO.Preload(_f))
 	}

@@ -6,18 +6,17 @@ package query
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/wubin1989/gorm"
-	"github.com/wubin1989/gorm/clause"
-	"github.com/wubin1989/gorm/schema"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 
 	"gorm.io/gen"
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
 
-	"gorm.io/gen/tests/.gen/dal_4/model"
+	"gorm.io/gen/tests/.expect/dal_test_relation/model"
 )
 
 func newCustomer(db *gorm.DB, opts ...gen.DOOption) customer {
@@ -33,6 +32,17 @@ func newCustomer(db *gorm.DB, opts ...gen.DOOption) customer {
 	_customer.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_customer.DeletedAt = field.NewField(tableName, "deleted_at")
 	_customer.BankID = field.NewInt64(tableName, "bank_id")
+	_customer.Bank = customerHasOneBank{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("Bank", "model.Bank"),
+	}
+
+	_customer.CreditCards = customerHasManyCreditCards{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("CreditCards", "model.CreditCard"),
+	}
 
 	_customer.fillFieldMap()
 
@@ -48,6 +58,9 @@ type customer struct {
 	UpdatedAt field.Time
 	DeletedAt field.Field
 	BankID    field.Int64
+	Bank      customerHasOneBank
+
+	CreditCards customerHasManyCreditCards
 
 	fieldMap map[string]field.Expr
 }
@@ -75,7 +88,7 @@ func (c *customer) updateTableName(table string) *customer {
 	return c
 }
 
-func (c *customer) WithContext(ctx context.Context) ICustomerDo { return c.customerDo.WithContext(ctx) }
+func (c *customer) WithContext(ctx context.Context) *customerDo { return c.customerDo.WithContext(ctx) }
 
 func (c customer) TableName() string { return c.customerDo.TableName() }
 
@@ -93,7 +106,7 @@ func (c *customer) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (c *customer) fillFieldMap() {
-	c.fieldMap = make(map[string]field.Expr, 5)
+	c.fieldMap = make(map[string]field.Expr, 7)
 	c.fieldMap["id"] = c.ID
 	c.fieldMap["created_at"] = c.CreatedAt
 	c.fieldMap["updated_at"] = c.UpdatedAt
@@ -103,168 +116,253 @@ func (c *customer) fillFieldMap() {
 
 func (c customer) clone(db *gorm.DB) customer {
 	c.customerDo.ReplaceConnPool(db.Statement.ConnPool)
+	c.Bank.db = db.Session(&gorm.Session{Initialized: true})
+	c.Bank.db.Statement.ConnPool = db.Statement.ConnPool
+	c.CreditCards.db = db.Session(&gorm.Session{Initialized: true})
+	c.CreditCards.db.Statement.ConnPool = db.Statement.ConnPool
 	return c
 }
 
 func (c customer) replaceDB(db *gorm.DB) customer {
 	c.customerDo.ReplaceDB(db)
+	c.Bank.db = db.Session(&gorm.Session{})
+	c.CreditCards.db = db.Session(&gorm.Session{})
 	return c
+}
+
+type customerHasOneBank struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a customerHasOneBank) Where(conds ...field.Expr) *customerHasOneBank {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a customerHasOneBank) WithContext(ctx context.Context) *customerHasOneBank {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a customerHasOneBank) Session(session *gorm.Session) *customerHasOneBank {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a customerHasOneBank) Model(m *model.Customer) *customerHasOneBankTx {
+	return &customerHasOneBankTx{a.db.Model(m).Association(a.Name())}
+}
+
+type customerHasOneBankTx struct{ tx *gorm.Association }
+
+func (a customerHasOneBankTx) Find() (result *model.Bank, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a customerHasOneBankTx) Append(values ...*model.Bank) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a customerHasOneBankTx) Replace(values ...*model.Bank) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a customerHasOneBankTx) Delete(values ...*model.Bank) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a customerHasOneBankTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a customerHasOneBankTx) Count() int64 {
+	return a.tx.Count()
+}
+
+type customerHasManyCreditCards struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a customerHasManyCreditCards) Where(conds ...field.Expr) *customerHasManyCreditCards {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a customerHasManyCreditCards) WithContext(ctx context.Context) *customerHasManyCreditCards {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a customerHasManyCreditCards) Session(session *gorm.Session) *customerHasManyCreditCards {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a customerHasManyCreditCards) Model(m *model.Customer) *customerHasManyCreditCardsTx {
+	return &customerHasManyCreditCardsTx{a.db.Model(m).Association(a.Name())}
+}
+
+type customerHasManyCreditCardsTx struct{ tx *gorm.Association }
+
+func (a customerHasManyCreditCardsTx) Find() (result []*model.CreditCard, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a customerHasManyCreditCardsTx) Append(values ...*model.CreditCard) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a customerHasManyCreditCardsTx) Replace(values ...*model.CreditCard) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a customerHasManyCreditCardsTx) Delete(values ...*model.CreditCard) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a customerHasManyCreditCardsTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a customerHasManyCreditCardsTx) Count() int64 {
+	return a.tx.Count()
 }
 
 type customerDo struct{ gen.DO }
 
-type ICustomerDo interface {
-	gen.SubQuery
-	Debug() ICustomerDo
-	WithContext(ctx context.Context) ICustomerDo
-	WithResult(fc func(tx gen.Dao)) gen.ResultInfo
-	ReplaceDB(db *gorm.DB)
-	ReadDB() ICustomerDo
-	WriteDB() ICustomerDo
-	As(alias string) gen.Dao
-	Session(config *gorm.Session) ICustomerDo
-	Columns(cols ...field.Expr) gen.Columns
-	Clauses(conds ...clause.Expression) ICustomerDo
-	Not(conds ...gen.Condition) ICustomerDo
-	Or(conds ...gen.Condition) ICustomerDo
-	Select(conds ...field.Expr) ICustomerDo
-	Where(conds ...gen.Condition) ICustomerDo
-	Order(conds ...field.Expr) ICustomerDo
-	Distinct(cols ...field.Expr) ICustomerDo
-	Omit(cols ...field.Expr) ICustomerDo
-	Join(table schema.Tabler, on ...field.Expr) ICustomerDo
-	LeftJoin(table schema.Tabler, on ...field.Expr) ICustomerDo
-	RightJoin(table schema.Tabler, on ...field.Expr) ICustomerDo
-	Group(cols ...field.Expr) ICustomerDo
-	Having(conds ...gen.Condition) ICustomerDo
-	Limit(limit int) ICustomerDo
-	Offset(offset int) ICustomerDo
-	Count() (count int64, err error)
-	Scopes(funcs ...func(gen.Dao) gen.Dao) ICustomerDo
-	Unscoped() ICustomerDo
-	Create(values ...*model.Customer) error
-	CreateInBatches(values []*model.Customer, batchSize int) error
-	Save(values ...*model.Customer) error
-	First() (*model.Customer, error)
-	Take() (*model.Customer, error)
-	Last() (*model.Customer, error)
-	Find() ([]*model.Customer, error)
-	FindInBatch(batchSize int, fc func(tx gen.Dao, batch int) error) (results []*model.Customer, err error)
-	FindInBatches(result *[]*model.Customer, batchSize int, fc func(tx gen.Dao, batch int) error) error
-	Pluck(column field.Expr, dest interface{}) error
-	Delete(...*model.Customer) (info gen.ResultInfo, err error)
-	Update(column field.Expr, value interface{}) (info gen.ResultInfo, err error)
-	UpdateSimple(columns ...field.AssignExpr) (info gen.ResultInfo, err error)
-	Updates(value interface{}) (info gen.ResultInfo, err error)
-	UpdateColumn(column field.Expr, value interface{}) (info gen.ResultInfo, err error)
-	UpdateColumnSimple(columns ...field.AssignExpr) (info gen.ResultInfo, err error)
-	UpdateColumns(value interface{}) (info gen.ResultInfo, err error)
-	UpdateFrom(q gen.SubQuery) gen.Dao
-	Attrs(attrs ...field.AssignExpr) ICustomerDo
-	Assign(attrs ...field.AssignExpr) ICustomerDo
-	Joins(fields ...field.RelationField) ICustomerDo
-	Preload(fields ...field.RelationField) ICustomerDo
-	FirstOrInit() (*model.Customer, error)
-	FirstOrCreate() (*model.Customer, error)
-	FindByPage(offset int, limit int) (result []*model.Customer, count int64, err error)
-	ScanByPage(result interface{}, offset int, limit int) (count int64, err error)
-	Rows() (*sql.Rows, error)
-	Row() *sql.Row
-	Scan(result interface{}) (err error)
-	Returning(value interface{}, columns ...string) ICustomerDo
-	UnderlyingDB() *gorm.DB
-	schema.Tabler
-}
-
-func (c customerDo) Debug() ICustomerDo {
+func (c customerDo) Debug() *customerDo {
 	return c.withDO(c.DO.Debug())
 }
 
-func (c customerDo) WithContext(ctx context.Context) ICustomerDo {
+func (c customerDo) WithContext(ctx context.Context) *customerDo {
 	return c.withDO(c.DO.WithContext(ctx))
 }
 
-func (c customerDo) ReadDB() ICustomerDo {
+func (c customerDo) ReadDB() *customerDo {
 	return c.Clauses(dbresolver.Read)
 }
 
-func (c customerDo) WriteDB() ICustomerDo {
+func (c customerDo) WriteDB() *customerDo {
 	return c.Clauses(dbresolver.Write)
 }
 
-func (c customerDo) Session(config *gorm.Session) ICustomerDo {
+func (c customerDo) Session(config *gorm.Session) *customerDo {
 	return c.withDO(c.DO.Session(config))
 }
 
-func (c customerDo) Clauses(conds ...clause.Expression) ICustomerDo {
+func (c customerDo) Clauses(conds ...clause.Expression) *customerDo {
 	return c.withDO(c.DO.Clauses(conds...))
 }
 
-func (c customerDo) Returning(value interface{}, columns ...string) ICustomerDo {
+func (c customerDo) Returning(value interface{}, columns ...string) *customerDo {
 	return c.withDO(c.DO.Returning(value, columns...))
 }
 
-func (c customerDo) Not(conds ...gen.Condition) ICustomerDo {
+func (c customerDo) Not(conds ...gen.Condition) *customerDo {
 	return c.withDO(c.DO.Not(conds...))
 }
 
-func (c customerDo) Or(conds ...gen.Condition) ICustomerDo {
+func (c customerDo) Or(conds ...gen.Condition) *customerDo {
 	return c.withDO(c.DO.Or(conds...))
 }
 
-func (c customerDo) Select(conds ...field.Expr) ICustomerDo {
+func (c customerDo) Select(conds ...field.Expr) *customerDo {
 	return c.withDO(c.DO.Select(conds...))
 }
 
-func (c customerDo) Where(conds ...gen.Condition) ICustomerDo {
+func (c customerDo) Where(conds ...gen.Condition) *customerDo {
 	return c.withDO(c.DO.Where(conds...))
 }
 
-func (c customerDo) Order(conds ...field.Expr) ICustomerDo {
+func (c customerDo) Order(conds ...field.Expr) *customerDo {
 	return c.withDO(c.DO.Order(conds...))
 }
 
-func (c customerDo) Distinct(cols ...field.Expr) ICustomerDo {
+func (c customerDo) Distinct(cols ...field.Expr) *customerDo {
 	return c.withDO(c.DO.Distinct(cols...))
 }
 
-func (c customerDo) Omit(cols ...field.Expr) ICustomerDo {
+func (c customerDo) Omit(cols ...field.Expr) *customerDo {
 	return c.withDO(c.DO.Omit(cols...))
 }
 
-func (c customerDo) Join(table schema.Tabler, on ...field.Expr) ICustomerDo {
+func (c customerDo) Join(table schema.Tabler, on ...field.Expr) *customerDo {
 	return c.withDO(c.DO.Join(table, on...))
 }
 
-func (c customerDo) LeftJoin(table schema.Tabler, on ...field.Expr) ICustomerDo {
+func (c customerDo) LeftJoin(table schema.Tabler, on ...field.Expr) *customerDo {
 	return c.withDO(c.DO.LeftJoin(table, on...))
 }
 
-func (c customerDo) RightJoin(table schema.Tabler, on ...field.Expr) ICustomerDo {
+func (c customerDo) RightJoin(table schema.Tabler, on ...field.Expr) *customerDo {
 	return c.withDO(c.DO.RightJoin(table, on...))
 }
 
-func (c customerDo) Group(cols ...field.Expr) ICustomerDo {
+func (c customerDo) Group(cols ...field.Expr) *customerDo {
 	return c.withDO(c.DO.Group(cols...))
 }
 
-func (c customerDo) Having(conds ...gen.Condition) ICustomerDo {
+func (c customerDo) Having(conds ...gen.Condition) *customerDo {
 	return c.withDO(c.DO.Having(conds...))
 }
 
-func (c customerDo) Limit(limit int) ICustomerDo {
+func (c customerDo) Limit(limit int) *customerDo {
 	return c.withDO(c.DO.Limit(limit))
 }
 
-func (c customerDo) Offset(offset int) ICustomerDo {
+func (c customerDo) Offset(offset int) *customerDo {
 	return c.withDO(c.DO.Offset(offset))
 }
 
-func (c customerDo) Scopes(funcs ...func(gen.Dao) gen.Dao) ICustomerDo {
+func (c customerDo) Scopes(funcs ...func(gen.Dao) gen.Dao) *customerDo {
 	return c.withDO(c.DO.Scopes(funcs...))
 }
 
-func (c customerDo) Unscoped() ICustomerDo {
+func (c customerDo) Unscoped() *customerDo {
 	return c.withDO(c.DO.Unscoped())
 }
 
@@ -330,22 +428,22 @@ func (c customerDo) FindInBatches(result *[]*model.Customer, batchSize int, fc f
 	return c.DO.FindInBatches(result, batchSize, fc)
 }
 
-func (c customerDo) Attrs(attrs ...field.AssignExpr) ICustomerDo {
+func (c customerDo) Attrs(attrs ...field.AssignExpr) *customerDo {
 	return c.withDO(c.DO.Attrs(attrs...))
 }
 
-func (c customerDo) Assign(attrs ...field.AssignExpr) ICustomerDo {
+func (c customerDo) Assign(attrs ...field.AssignExpr) *customerDo {
 	return c.withDO(c.DO.Assign(attrs...))
 }
 
-func (c customerDo) Joins(fields ...field.RelationField) ICustomerDo {
+func (c customerDo) Joins(fields ...field.RelationField) *customerDo {
 	for _, _f := range fields {
 		c = *c.withDO(c.DO.Joins(_f))
 	}
 	return &c
 }
 
-func (c customerDo) Preload(fields ...field.RelationField) ICustomerDo {
+func (c customerDo) Preload(fields ...field.RelationField) *customerDo {
 	for _, _f := range fields {
 		c = *c.withDO(c.DO.Preload(_f))
 	}
